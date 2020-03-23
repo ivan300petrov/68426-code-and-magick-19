@@ -1,174 +1,113 @@
 "use strict";
 
-var Cloud = {
-  LEFT: 100,
-  TOP: 10,
-  WIDTH: 420,
-  HEIGHT: 270,
-  SHADOW_SHIFT: 10,
-  BORDER_RADIUS: 10
+var CLOUD_WIDTH = 420;
+var CLOUD_HEIGHT = 270;
+var CLOUD_X = 100;
+var CLOUD_Y = 10;
+var CLOUD_COLOR = "#ffffff";
+var SHADOW_GAP = 10;
+var SHADOW_COLOR = "rgba(0, 0, 0, 0.7)";
+var BAR_WIDTH = 40;
+var BAR_GAP = 50;
+var BAR_MAX_HEIGHT = 150;
+var BAR_BOTTOM_Y = 245;
+var START_POINT_X = 140;
+var MAIN_PLAYER_COLOR = "rgba(255, 0, 0, 1)";
+var PLAYER_NAME_Y = 255;
+var TIME_SCORE_Y = 225;
+
+var textColor = "#000000";
+var textBaseline = "hanging";
+var textFont = "16px PT Mono";
+
+var renderCloud = function(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, CLOUD_WIDTH, CLOUD_HEIGHT);
 };
 
-var Colors = {
-  RED: "rgba(255, 0, 0, 1)",
-  BLACK: "rgb(0, 0, 0)",
-  WHITE: "rgb(255, 255, 255)",
-  SHADOW: "rgba(0, 0, 0, 0.7)"
-};
-
-var Description = {
-  STR_HOORAY: "Ура вы победили!",
-  STR_RESULTS: "Список результатов: ",
-  LEFT: Cloud.LEFT + 30,
-  STR_HOORAY_TOP: Cloud.TOP + 40,
-  STR_RESULTS_TOP: Cloud.TOP + 65
-};
-
-var Column = {
-  WIDTH: 40,
-  SHIFT: 50,
-  LEFT: Cloud.LEFT + 50,
-  TOP: Cloud.TOP + 210
-};
-
-var FONT = "16px PT Mono";
-var YOU = "Вы";
-var NAME_SHIFT = 20;
-var TIME_SHIFT = 10;
-
-var drawCloudElement = function(ctx, shift, elementColor) {
-  ctx.fillStyle = elementColor;
-  ctx.beginPath();
-
-  // Хуже этого я придумать не смог:
-  ctx.moveTo(shift + Cloud.LEFT + Cloud.BORDER_RADIUS, shift + Cloud.TOP);
-  ctx.lineTo(
-    shift + Cloud.LEFT + Cloud.WIDTH - Cloud.BORDER_RADIUS * 2,
-    shift + Cloud.TOP
-  );
-  ctx.quadraticCurveTo(
-    shift + Cloud.LEFT + Cloud.WIDTH - Cloud.BORDER_RADIUS,
-    shift + Cloud.TOP,
-    shift + Cloud.LEFT + Cloud.WIDTH - Cloud.BORDER_RADIUS,
-    shift + Cloud.TOP + Cloud.BORDER_RADIUS
-  );
-  ctx.lineTo(
-    shift + Cloud.LEFT + Cloud.WIDTH - Cloud.BORDER_RADIUS,
-    shift + Cloud.TOP + Cloud.HEIGHT - Cloud.BORDER_RADIUS * 2
-  );
-  ctx.quadraticCurveTo(
-    shift + Cloud.LEFT + Cloud.WIDTH - Cloud.BORDER_RADIUS,
-    shift + Cloud.TOP + Cloud.HEIGHT - Cloud.BORDER_RADIUS,
-    shift + Cloud.LEFT + Cloud.WIDTH - Cloud.BORDER_RADIUS * 2,
-    shift + Cloud.TOP + Cloud.HEIGHT - Cloud.BORDER_RADIUS
-  );
-  ctx.lineTo(
-    shift + Cloud.LEFT + Cloud.BORDER_RADIUS,
-    shift + Cloud.TOP + Cloud.HEIGHT - Cloud.BORDER_RADIUS
-  );
-  ctx.quadraticCurveTo(
-    shift + Cloud.LEFT,
-    shift + Cloud.TOP + Cloud.HEIGHT - Cloud.BORDER_RADIUS,
-    shift + Cloud.LEFT,
-    shift + Cloud.TOP + Cloud.HEIGHT - Cloud.BORDER_RADIUS * 2
-  );
-  ctx.lineTo(shift + Cloud.LEFT, shift + Cloud.TOP + Cloud.BORDER_RADIUS);
-  ctx.quadraticCurveTo(
-    shift + Cloud.LEFT,
-    shift + Cloud.TOP,
-    shift + Cloud.LEFT + Cloud.BORDER_RADIUS,
-    shift + Cloud.TOP
-  );
-  ctx.stroke();
-  ctx.fill();
-};
-
-var renderDescription = function(ctx) {
-  ctx.fillStyle = Colors.BLACK;
-  ctx.font = FONT;
-  ctx.fillText(
-    Description.STR_HOORAY,
-    Description.LEFT,
-    Description.STR_HOORAY_TOP
-  );
-  ctx.fillText(
-    Description.STR_RESULTS,
-    Description.LEFT,
-    Description.STR_RESULTS_TOP
-  );
-};
-
-var getMaxTime = function(timesArray) {
-  var maxTime = timesArray[0];
-
-  for (var i = 0; i < timesArray.length; i++) {
-    if (timesArray[i] > maxTime) {
-      maxTime = timesArray[i];
+var getMaxElement = function(arr) {
+  var maxElement = arr[0];
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] > maxElement) {
+      maxElement = arr[i];
     }
   }
-
-  return maxTime;
+  return maxElement;
 };
 
-var renderColumn = function(ctx, ColumnParams) {
-  ctx.fillRect(
-    ColumnParams.left,
-    ColumnParams.top - ColumnParams.ColumnHeight,
-    Column.WIDTH,
-    ColumnParams.ColumnHeight
+var getRandomHslSaturation = function(color, brightness) {
+  return (
+    "hsl(" + color + ", " + Math.random() * 100 + "%, " + brightness + "%)"
   );
 };
 
-var getBlueColor = function() {
-  return "hsl(240, " + Math.floor(Math.random() * 100) + "%, 50%)";
+var drawBar = function(ctx, x, y, width, height, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, width, height);
 };
 
-var renderName = function(ctx, ColumnParams) {
-  ctx.fillStyle = Colors.BLACK;
-  ctx.fillText(
-    ColumnParams.name,
-    ColumnParams.left,
-    ColumnParams.top + NAME_SHIFT
-  );
-};
-
-var renderTime = function(ctx, ColumnParams) {
-  ctx.fillStyle = Colors.BLACK;
-  ctx.fillText(
-    Math.round(ColumnParams.time),
-    ColumnParams.leftPos,
-    ColumnParams.topPos - TIME_SHIFT - ColumnParams.ColumnHeight
-  );
+var writeText = function(ctx, text, x, y, color, baseline, font) {
+  ctx.fillStyle = color;
+  ctx.textBaseline = baseline;
+  ctx.font = font;
+  ctx.fillText(text, x, y);
 };
 
 window.renderStatistics = function(ctx, names, times) {
-  // Рисуем тень (передаём в функцию отступ тени)
-  drawCloudElement(ctx, Cloud.SHADOW_SHIFT, Colors.SHADOW);
+  var maxTime = getMaxElement(times);
 
-  // Рисуем облако (без отступа, т.е. он равен 0)
-  drawCloudElement(ctx, 0, Colors.WHITE);
-
-  renderDescription(ctx);
-
-  var maxValue = getMaxTime(times);
+  renderCloud(ctx, CLOUD_X + SHADOW_GAP, CLOUD_Y + SHADOW_GAP, SHADOW_COLOR);
+  renderCloud(ctx, CLOUD_X, CLOUD_Y, CLOUD_COLOR);
+  writeText(
+    ctx,
+    "Ура, вы победили!",
+    120,
+    30,
+    textColor,
+    textBaseline,
+    textFont
+  );
+  writeText(
+    ctx,
+    "Список результатов:",
+    120,
+    50,
+    textColor,
+    textBaseline,
+    textFont
+  );
 
   for (var i = 0; i < names.length; i++) {
-    var ColumnParams = {
-      left: Column.LEFT + (Column.WIDTH + Column.SHIFT) * i,
-      top: Column.TOP,
-      ColumnHeight: (times[i] / maxValue) * 100,
-      name: names[i],
-      time: times
-    };
-
-    if (names[i] === YOU) {
-      ctx.fillStyle = Colors.RED;
-    } else {
-      ctx.fillStyle = getBlueColor();
+    var barHeight = (times[i] * BAR_MAX_HEIGHT) / maxTime;
+    var color = getRandomHslSaturation(240, 70);
+    if (names[i] === "Вы") {
+      color = MAIN_PLAYER_COLOR;
     }
-
-    renderColumn(ctx, ColumnParams);
-    renderName(ctx, ColumnParams);
-    renderTime(ctx, ColumnParams);
+    drawBar(
+      ctx,
+      START_POINT_X + i * (BAR_WIDTH + BAR_GAP),
+      BAR_BOTTOM_Y - barHeight,
+      BAR_WIDTH,
+      barHeight,
+      color
+    );
+    writeText(
+      ctx,
+      Math.floor(times[i]),
+      START_POINT_X + i * (BAR_WIDTH + BAR_GAP),
+      TIME_SCORE_Y - barHeight,
+      textColor,
+      textBaseline,
+      textFont
+    );
+    writeText(
+      ctx,
+      names[i],
+      START_POINT_X + i * (BAR_WIDTH + BAR_GAP),
+      PLAYER_NAME_Y,
+      textColor,
+      textBaseline,
+      textFont
+    );
   }
 };
