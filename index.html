@@ -233,15 +233,17 @@
       fireballSize = 22;
       wizardSpeed = 3;
       wizardWidth = 70;
-      getWizardY = height => ~~height/3;
+      getWizardY = height => ~~height / 3;
 
-      getWizardX = width => ~~((width-wizardWidth)/2);
+      getWizardX = width => ~~((width - wizardWidth) / 2);
 
-      getWizardHeight = wizardWidth => wizardWidth*1.337;
+      getWizardHeight = wizardWidth => wizardWidth * 1.337;
 
-      getFireballSpeed = left => left?2:5;
-
+      getFireballSpeed = left => (left ? 2 : 5);
     </script>
+    <script src="js/stats.js"></script>
+    <script src="js/setup.js"></script>
+
     <script src="js/game.js"></script>
   </body>
 </html>
