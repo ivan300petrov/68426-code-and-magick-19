@@ -230,23 +230,19 @@
       </div>
     </template>
     <script>
-      fireballSize = 10;
+      fireballSize = 22;
       wizardSpeed = 3;
-      wizardWidth = 100;
-      getWizardY = function(height) {
-        return Math.round(height / 2);
-      };
-      getWizardX = function(width) {
-        return Math.round(width / 2);
-      };
-      getWizardHeight = function(wizardWidth) {
-        return (getWizardHeight = wizardWidth * 1.337);
-      };
-      getFireballSpeed = function(left) {
-        if (left) return 5;
-        return 2;
-      };
+      wizardWidth = 70;
+      getWizardY = height => ~~height / 2;
+
+      getWizardX = width => ~~((width - wizardWidth) / 2);
+
+      getWizardHeight = wizardWidth => wizardWidth * 1.337;
+
+      getFireballSpeed = left => (left ? 5 : 2);
     </script>
+    <script src="js/stats.js"></script>
+    <script src="js/setup.js"></script>
     <script src="js/game.js"></script>
   </body>
 </html>
